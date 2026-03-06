@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Пауки Урала — База находок</title>
+  <meta name="description" content="База данных находок пауков Уральского региона на основе научных публикаций">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-inner">
+      <h1>Находки пауков <em>Уральского региона</em></h1>
+      <p class="header-sub">База данных на основе научных публикаций</p>
+      <div class="header-meta">
+        <div class="meta-item">Записей: <span id="total-label">—</span></div>
+        <div class="meta-item">Отряд: <span>Araneae</span></div>
+        <div class="meta-item">Регион: <span>Урал, Россия</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── TOOLBAR ── -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <img src="icons/Search.svg" class="search-icon" alt="Search">
+      <input type="search" id="search" placeholder="Поиск по виду, находчику, месту...">
+    </div>
+    <div class="filter-group">
+      <!-- кнопки регионов вставляются через JS -->
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-bar">
+    Показано:&nbsp;<span id="count-label">—</span>&nbsp;записей
+  </div>
+
+  <!-- ── MAP ── -->
+  <div id="map-container">
+    <div id="map"></div>
+    <div id="map-loader" class="map-loader">
+      <div class="loader-spinner"></div>
+      <div class="loader-text">Загрузка карты...</div>
+    </div>
+  </div>
+
+  <!-- ── MODAL ── -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div id="modal" class="modal" role="dialog" aria-modal="true">
+
+      <div class="modal-header">
+        <div class="modal-number" id="m-number"></div>
+        <div class="modal-name" id="m-name"></div>
+        <div class="modal-name-ru" id="m-name-ru"></div>
+        <button class="modal-close" id="modal-close" aria-label="Закрыть">
+          <img src="icons/Close.svg" alt="Close">
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Таксономия -->
+        <div class="modal-section">
+          <div class="modal-section-title">Таксономия</div>
+          <div class="modal-field">
+            <div class="modal-field-label">Семейство</div>
+            <div class="modal-field-value" id="m-family"></div>
+          </div>
+        </div>
+
+        <!-- Находка -->
+        <div class="modal-section">
+          <div class="modal-section-title">Находка</div>
+          <div class="modal-field">
+            <div class="modal-field-label">Нашёл</div>
+            <div class="modal-field-value" id="m-finder"></div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Место</div>
+            <div class="modal-field-value" id="m-location"></div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Регион</div>
+            <div class="modal-field-value" id="m-region"></div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Год</div>
+            <div class="modal-field-value" id="m-date"></div>
+          </div>
+          <div class="modal-field">
+            <div class="modal-field-label">Биотоп</div>
+            <div class="modal-field-value" id="m-habitat"></div>
+          </div>
+        </div>
+
+        <!-- Примечания -->
+        <div class="modal-section">
+          <div class="modal-section-title">Примечания</div>
+          <div class="modal-field">
+            <div class="modal-field-value" id="m-notes"></div>
+          </div>
+        </div>
+
+        <!-- Источник -->
+        <div class="modal-section">
+          <div class="modal-section-title">Источник</div>
+          <div class="modal-source" id="m-source"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    Данные основаны на научных публикациях&nbsp;·&nbsp;Урал, Россия
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
