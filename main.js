@@ -2,17 +2,82 @@
 const DB_FILE = 'spiders.db';
 
 // ── THEME ───────────────────────────────────────────────
+function getSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(themeMode) {
+  let actualTheme;
+  
+  if (themeMode === 'auto') {
+    actualTheme = getSystemTheme();
+  } else {
+    actualTheme = themeMode;
+  }
+  
+  document.documentElement.setAttribute('data-theme', actualTheme);
+  
+  // Обновляем иконку переключателя
+  const themeToggle = document.getElementById('theme-toggle');
+  const lightIcon = themeToggle.querySelector('.light-icon');
+  const darkIcon = themeToggle.querySelector('.dark-icon');
+  const autoIcon = themeToggle.querySelector('.auto-icon');
+  
+  // Скрываем все иконки
+  lightIcon.style.opacity = '0';
+  lightIcon.style.transform = 'rotate(180deg) scale(0.8)';
+  darkIcon.style.opacity = '0';
+  darkIcon.style.transform = 'rotate(180deg) scale(0.8)';
+  autoIcon.style.opacity = '0';
+  autoIcon.style.transform = 'rotate(180deg) scale(0.8)';
+  
+  // Показываем нужную иконку
+  setTimeout(() => {
+    if (themeMode === 'light') {
+      lightIcon.style.opacity = '1';
+      lightIcon.style.transform = 'rotate(0deg) scale(1)';
+    } else if (themeMode === 'dark') {
+      darkIcon.style.opacity = '1';
+      darkIcon.style.transform = 'rotate(0deg) scale(1)';
+    } else {
+      autoIcon.style.opacity = '1';
+      autoIcon.style.transform = 'rotate(0deg) scale(1)';
+    }
+  }, 150);
+}
+
 function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+  const savedTheme = localStorage.getItem('theme') || 'auto';
+  applyTheme(savedTheme);
+  
+  // Слушаем изменения системной темы
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const currentTheme = localStorage.getItem('theme') || 'auto';
+    if (currentTheme === 'auto') {
+      applyTheme('auto');
+      // Обновляем маркеры при изменении системной темы
+      if (map && allSpiders.length > 0) {
+        updateMapMarkers();
+      }
+    }
+  });
   
   const themeToggle = document.getElementById('theme-toggle');
   themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    const currentTheme = localStorage.getItem('theme') || 'auto';
+    let newTheme;
     
-    document.documentElement.setAttribute('data-theme', newTheme);
+    // Циклическое переключение: auto -> light -> dark -> auto
+    if (currentTheme === 'auto') {
+      newTheme = 'light';
+    } else if (currentTheme === 'light') {
+      newTheme = 'dark';
+    } else {
+      newTheme = 'auto';
+    }
+    
     localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme);
     
     // Обновляем маркеры при смене темы
     if (map && allSpiders.length > 0) {

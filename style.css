@@ -119,24 +119,11 @@ header {
   color: var(--text-secondary);
   transition: all 0.3s ease;
   position: absolute;
-}
-
-.sun-icon {
-  opacity: 1;
-  transform: rotate(0deg) scale(1);
-}
-
-.moon-icon {
   opacity: 0;
   transform: rotate(180deg) scale(0.8);
 }
 
-[data-theme="dark"] .sun-icon {
-  opacity: 0;
-  transform: rotate(-180deg) scale(0.8);
-}
-
-[data-theme="dark"] .moon-icon {
+.auto-icon {
   opacity: 1;
   transform: rotate(0deg) scale(1);
 }
