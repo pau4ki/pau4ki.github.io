@@ -15,38 +15,64 @@
   <!-- ── HEADER ── -->
   <header>
     <div class="header-inner">
-      <h1>Находки пауков <em>Уральского региона</em></h1>
-      <p class="header-sub">База данных на основе научных публикаций</p>
-      <div class="header-meta">
-        <div class="meta-item">Записей: <span id="total-label">—</span></div>
-        <div class="meta-item">Отряд: <span>Araneae</span></div>
-        <div class="meta-item">Регион: <span>Урал, Россия</span></div>
+      <div class="header-left">
+        <h1>Находки пауков <em>Уральского региона</em></h1>
+        <p class="header-sub">База данных на основе научных публикаций</p>
+      </div>
+      <div class="header-right">
+        <button id="theme-toggle" class="theme-toggle" aria-label="Переключить тему">
+          <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+          <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <div class="header-meta">
+          <div class="meta-item">Записей: <span id="total-label">—</span></div>
+          <div class="meta-item">Отряд: <span>Araneae</span></div>
+          <div class="meta-item">Регион: <span>Урал, Россия</span></div>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- ── TOOLBAR ── -->
-  <div class="toolbar">
-    <div class="search-wrap">
-      <img src="icons/Search.svg" class="search-icon" alt="Search">
-      <input type="search" id="search" placeholder="Поиск по виду, находчику, месту...">
-    </div>
-    <div class="filter-group">
-      <!-- кнопки регионов вставляются через JS -->
+  <div class="toolbar-container">
+    <div class="toolbar">
+      <div class="search-section">
+        <div class="search-wrap">
+          <img src="icons/Search.svg" class="search-icon" alt="Search">
+          <input type="search" id="search" placeholder="Поиск по виду, находчику, месту...">
+        </div>
+      </div>
+      <div class="filter-section">
+        <select id="region-select" class="region-select">
+          <!-- опции регионов вставляются через JS -->
+        </select>
+        <div class="filter-group">
+          <!-- кнопки регионов вставляются через JS -->
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- ── STATS ── -->
-  <div class="stats-bar">
-    Показано:&nbsp;<span id="count-label">—</span>&nbsp;записей
+  <div class="stats-container">
+    <div class="stats-bar">
+      Показано:&nbsp;<span id="count-label">—</span>&nbsp;записей
+    </div>
   </div>
 
   <!-- ── MAP ── -->
-  <div id="map-container">
-    <div id="map"></div>
-    <div id="map-loader" class="map-loader">
-      <div class="loader-spinner"></div>
-      <div class="loader-text">Загрузка карты...</div>
+  <div class="map-container">
+    <div class="map-card">
+      <div id="map"></div>
+      <div id="map-loader" class="map-loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Загрузка карты...</div>
+      </div>
     </div>
   </div>
 

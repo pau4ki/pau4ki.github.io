@@ -1,6 +1,26 @@
 // ── CONFIG ──────────────────────────────────────────────
 const DB_FILE = 'spiders.db';
 
+// ── THEME ───────────────────────────────────────────────
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    // Обновляем маркеры при смене темы
+    if (map && allSpiders.length > 0) {
+      updateMapMarkers();
+    }
+  });
+}
+
 // ── STATE ───────────────────────────────────────────────
 let allSpiders = [];
 let activeRegion = 'all';
@@ -14,6 +34,7 @@ const searchInput = document.getElementById('search');
 const countLabel  = document.getElementById('count-label');
 const totalLabel  = document.getElementById('total-label');
 const filterGroup = document.querySelector('.filter-group');
+const regionSelect = document.getElementById('region-select');
 const modal       = document.getElementById('modal');
 const modalOverlay = document.getElementById('modal-overlay');
 
@@ -71,6 +92,7 @@ async function loadData() {
 function buildRegionFilters() {
   const regions = ['all', ...new Set(allSpiders.map(s => s.region).filter(Boolean))];
 
+  // Заполняем кнопки для десктопа
   filterGroup.innerHTML = regions.map(r => `
     <button class="filter-btn ${r === 'all' ? 'active' : ''}"
             data-region="${r}">
@@ -85,6 +107,18 @@ function buildRegionFilters() {
       btn.classList.add('active');
       updateMapMarkers();
     });
+  });
+
+  // Заполняем select для мобильных
+  regionSelect.innerHTML = regions.map(r => `
+    <option value="${r}" ${r === 'all' ? 'selected' : ''}>
+      ${r === 'all' ? 'Все регионы' : r}
+    </option>
+  `).join('');
+
+  regionSelect.addEventListener('change', (e) => {
+    activeRegion = e.target.value;
+    updateMapMarkers();
   });
 }
 
@@ -290,6 +324,15 @@ function updateMapMarkers() {
     map.removeLayer(markerClusterGroup);
   }
   
+  // Определяем тему один раз для всей функции
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const markerFill = isDark ? '#2a2a2a' : '#ffffff';
+  const markerStroke = '#7f7f8a';
+  const popupBg = isDark ? '#2a2a2a' : '#ffffff';
+  const textPrimary = isDark ? '#f3f4f6' : '#1a1a1a';
+  const textSecondary = isDark ? '#a1a1aa' : '#5c5c64';
+  const textMuted = isDark ? '#71717a' : '#7f7f8a';
+  
   // Создаем новую группу кластеров
   markerClusterGroup = L.markerClusterGroup({
     maxClusterRadius: 60,
@@ -298,18 +341,20 @@ function updateMapMarkers() {
     zoomToBoundsOnClick: true,
     iconCreateFunction: function(cluster) {
       const count = cluster.getChildCount();
+      
       let size = 'small';
       if (count > 10) size = 'large';
       else if (count > 5) size = 'medium';
       
       return L.divIcon({
-        html: `<div class="cluster-icon-wrapper">
-                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.4));">
-                   <g fill="#222831" stroke="#569cd6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
+        html: `<div class="cluster-icon-wrapper" style="position: relative;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3));">
+                   <g fill="${markerFill}" stroke="${markerStroke}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                      <path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                      <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>
                    </g>
                  </svg>
+                 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: ${markerStroke}; font-family: Inter, sans-serif; font-size: 12px; font-weight: 600; pointer-events: none;">${count}</div>
                </div>`,
         className: 'custom-cluster',
         iconSize: L.point(40, 40)
@@ -327,8 +372,8 @@ function updateMapMarkers() {
     // Создаем кастомную иконку для маркера
     const customIcon = L.divIcon({
       className: 'custom-marker',
-      html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.4));">
-               <g fill="#222831" stroke="#569cd6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+      html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.3));">
+               <g fill="${markerFill}" stroke="${markerStroke}" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/>
                  <circle cx="12" cy="10" r="3"/>
                </g>
@@ -346,8 +391,8 @@ function updateMapMarkers() {
     const sourceUrl = s.source || 'https://example.com';
 
     const popupOptions = {
-      maxWidth: 250,
-      minWidth: 220,
+      maxWidth: 280,
+      minWidth: 240,
       autoPan: true,
       autoPanPaddingTopLeft: [10, 80],
       autoPanPaddingBottomRight: [10, 10],
@@ -357,23 +402,23 @@ function updateMapMarkers() {
     };
 
     marker.bindPopup(`
-      <div style="font-family:'Segoe UI',sans-serif;min-width:220px;background:#393e46;color:#f8f8f2;padding:8px;">
-        <div style="font-size:13px;font-weight:600;color:#569cd6;margin-bottom:6px;">
+      <div style="font-family:'Inter',sans-serif;min-width:240px;background:${popupBg};color:${textPrimary};padding:16px;border-radius:12px;">
+        <div style="font-size:16px;font-weight:600;color:${textPrimary};margin-bottom:4px;">
           ${s.name}
         </div>
-        <div style="font-size:11px;color:#909399;margin-bottom:10px;">
+        <div style="font-size:13px;color:${textSecondary};margin-bottom:16px;font-style:italic;">
           ${s.name_ru || ''}
         </div>
-        <div style="font-size:11px;color:#f8f8f2;line-height:1.6;">
-          <div style="margin-bottom:4px;"><span style="color:#909399;">Координаты:</span> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
-          <div style="margin-bottom:4px;"><span style="color:#909399;">Место:</span> ${s.location || 'не указано'}</div>
-          <div style="margin-bottom:4px;"><span style="color:#909399;">Регион:</span> ${s.region || 'не указан'}</div>
-          <div style="margin-bottom:4px;"><span style="color:#909399;">Год:</span> ${s.date || '—'}</div>
+        <div style="font-size:13px;color:${textPrimary};line-height:1.6;">
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Координаты:</span> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Место:</span> ${s.location || 'не указано'}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Регион:</span> ${s.region || 'не указан'}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Год:</span> ${s.date || '—'}</div>
         </div>
         <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer"
-           style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;padding:5px 12px;background:#264f78;color:#f8f8f2;border:none;border-radius:2px;cursor:pointer;font-size:11px;font-family:'Segoe UI',sans-serif;text-align:center;text-decoration:none;font-weight:600;">
+           style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:10px 16px;background:#7f7f8a;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;text-align:center;text-decoration:none;font-weight:500;transition:all 0.2s ease;">
           <span>Источник</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
             <path d="M15 3h6v6"/>
             <path d="M10 14L21 3"/>
@@ -437,6 +482,9 @@ modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) clo
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ── INIT ────────────────────────────────────────────────
+// Инициализация темы
+initTheme();
+
 // Регистрация Service Worker для кэширования
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
