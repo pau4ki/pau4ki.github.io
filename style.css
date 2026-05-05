@@ -84,6 +84,9 @@ header {
   color: var(--text-primary);
   line-height: 1.2;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .header-left h1 em {
@@ -96,6 +99,8 @@ header {
   color: var(--text-muted);
   font-weight: 400;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-top: 1px;
 }
 
@@ -107,6 +112,7 @@ header {
   gap: 8px;
   max-width: 640px;
   margin: 0 auto;
+  min-width: 0;
 }
 
 /* Правый блок */
@@ -570,15 +576,37 @@ footer {
   .header-sub {
     display: none;
   }
+}
 
-  /* На совсем маленьких экранах дропдаун под поиском */
+/* Узкие экраны — 330–400px */
+@media (max-width: 400px) {
+  .header-inner {
+    padding: 6px 12px;
+    gap: 4px;
+  }
+
+  /* Строка 1: «Находки» (сокращённо через ellipsis) + кнопка темы */
+  .header-left {
+    max-width: calc(100% - 44px); /* место под кнопку темы */
+  }
+
+  .header-left h1 {
+    font-size: 12px;
+  }
+
+  /* Строка 2: поиск на всю ширину */
+  /* Строка 3: регион на всю ширину */
   .header-center {
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
   }
 
   .region-select {
     width: 100%;
+  }
+
+  #search {
+    font-size: 12px;
   }
 }
 
