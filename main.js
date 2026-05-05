@@ -1,5 +1,5 @@
 // ── CONFIG ──────────────────────────────────────────────
-const DB_FILE = 'https://raw.githubusercontent.com/pau4ki/pau4ki.github.io/main/spiders.db';
+const DB_FILE = 'spiders.db';
 
 // ── THEME ───────────────────────────────────────────────
 function getSystemTheme() {
