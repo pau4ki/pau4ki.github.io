@@ -533,30 +533,37 @@ footer {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
-  /* Шапка: 2 строки
-     Строка 1: заголовок | кнопка темы
-     Строка 2: поиск + регион (на всю ширину)           */
+  /*
+    Grid layout:
+    [ left        | right ]
+    [ center · center     ]
+  */
   .header-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "left  right"
+      "center center";
     height: auto;
-    flex-wrap: wrap;
     padding: 8px 16px;
-    gap: 6px;
+    gap: 6px 8px;
   }
 
   .header-left {
-    flex: 1;
+    grid-area: left;
     min-width: 0;
+    overflow: hidden;
   }
 
   .header-right {
+    grid-area: right;
     margin-left: 0;
-    flex-shrink: 0;
+    align-self: center;
   }
 
-  /* Строка поиска — всегда вторая, на всю ширину */
   .header-center {
-    order: 3;
-    width: 100%;
+    grid-area: center;
     max-width: 100%;
     margin: 0;
   }
@@ -578,55 +585,40 @@ footer {
   }
 }
 
-/* Узкие экраны — 330–400px */
-@media (max-width: 400px) {
+/* Очень узкие экраны (≤360px) — регион под поиском */
+@media (max-width: 360px) {
   .header-inner {
     padding: 6px 12px;
-    gap: 4px;
-  }
-
-  /* Строка 1: «Находки» (сокращённо через ellipsis) + кнопка темы */
-  .header-left {
-    max-width: calc(100% - 44px); /* место под кнопку темы */
   }
 
   .header-left h1 {
     font-size: 12px;
   }
 
-  /* Строка 2: поиск на всю ширину */
-  /* Строка 3: регион на всю ширину */
   .header-center {
     flex-direction: column;
     gap: 5px;
   }
 
+  .search-wrap,
   .region-select {
     width: 100%;
   }
-
-  #search {
-    font-size: 12px;
-  }
 }
 
-/* Ландшафт на телефоне — шапка в одну строку, компактно */
+/* Ландшафт на телефоне — одна строка, компактно */
 @media (max-height: 500px) and (orientation: landscape) {
   .header-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     height: 40px;
-    flex-wrap: nowrap;
     padding: 0 16px;
+    gap: 12px;
   }
 
-  .header-center {
-    order: 0;
-    width: auto;
-    flex: 1;
-    max-width: none;
-    margin: 0;
-  }
-
-  .header-sub {
-    display: none;
-  }
+  .header-left  { flex-shrink: 0; }
+  .header-center { flex: 1; max-width: none; margin: 0; }
+  .header-right  { margin-left: 0; }
+  .header-sub    { display: none; }
 }
