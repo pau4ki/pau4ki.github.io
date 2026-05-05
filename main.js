@@ -95,12 +95,9 @@ let markers = [];
 let markerClusterGroup = null;
 
 // ── DOM REFS ────────────────────────────────────────────
-const searchInput = document.getElementById('search');
-const countLabel  = document.getElementById('count-label');
-const totalLabel  = document.getElementById('total-label');
-const filterGroup = document.querySelector('.filter-group');
+const searchInput  = document.getElementById('search');
 const regionSelect = document.getElementById('region-select');
-const modal       = document.getElementById('modal');
+const modal        = document.getElementById('modal');
 const modalOverlay = document.getElementById('modal-overlay');
 
 // ── LOAD DATA ───────────────────────────────────────────
@@ -140,9 +137,8 @@ async function loadData() {
     db.close();
     
     initMap();
-    setDynamicBounds(); // Устанавливаем динамические границы
+    setDynamicBounds();
     buildRegionFilters();
-    updateTotal();
     updateMapMarkers();
   } catch (e) {
     document.getElementById('map').innerHTML = `<div style="padding:40px;color:#f48771;font-family:'Consolas',monospace;font-size:12px;text-align:center;">
@@ -157,24 +153,6 @@ async function loadData() {
 function buildRegionFilters() {
   const regions = ['all', ...new Set(allSpiders.map(s => s.region).filter(Boolean))];
 
-  // Заполняем кнопки для десктопа
-  filterGroup.innerHTML = regions.map(r => `
-    <button class="filter-btn ${r === 'all' ? 'active' : ''}"
-            data-region="${r}">
-      ${r === 'all' ? 'Все регионы' : r}
-    </button>
-  `).join('');
-
-  filterGroup.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      activeRegion = btn.dataset.region;
-      filterGroup.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      updateMapMarkers();
-    });
-  });
-
-  // Заполняем select для мобильных
   regionSelect.innerHTML = regions.map(r => `
     <option value="${r}" ${r === 'all' ? 'selected' : ''}>
       ${r === 'all' ? 'Все регионы' : r}
@@ -187,10 +165,6 @@ function buildRegionFilters() {
   });
 }
 
-function updateTotal() {
-  totalLabel.textContent = allSpiders.length;
-}
-
 // ── FILTER + SEARCH ─────────────────────────────────────
 function getFiltered() {
   return allSpiders.filter(s => {
@@ -200,12 +174,6 @@ function getFiltered() {
       .some(f => f && f.toLowerCase().includes(q));
     return matchRegion && matchSearch;
   });
-}
-
-// ── RENDER ──────────────────────────────────────────────
-function updateCount() {
-  const filtered = getFiltered();
-  countLabel.textContent = filtered.length;
 }
 
 // ── MODAL ───────────────────────────────────────────────
@@ -429,8 +397,6 @@ function updateMapMarkers() {
 
   const filtered = getFiltered();
   const spidersWithCoords = filtered.filter(s => s.latitude && s.longitude);
-  
-  updateCount();
   markers = [];
 
   spidersWithCoords.forEach(s => {
@@ -538,7 +504,6 @@ window.openSpiderModal = function(id) {
 // ── EVENTS ──────────────────────────────────────────────
 searchInput.addEventListener('input', e => {
   searchQuery = e.target.value;
-  updateCount();
   updateMapMarkers();
 });
 
