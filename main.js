@@ -93,12 +93,110 @@ let searchQuery  = '';
 let map = null;
 let markers = [];
 let markerClusterGroup = null;
+let regionsData = null;
+let regionsLayer = null;
 
 // ── DOM REFS ────────────────────────────────────────────
 const searchInput  = document.getElementById('search');
 const regionSelect = document.getElementById('region-select');
 const modal        = document.getElementById('modal');
 const modalOverlay = document.getElementById('modal-overlay');
+
+// ── REGIONS HIGHLIGHT via Nominatim ─────────────────────
+const boundaryCache = {};   // кэш: "запрос" → GeoJSON feature или null
+let highlightDebounce = null;
+
+// Специальные псевдонимы для нестандартных значений из БД
+const REGION_ALIASES = {
+  'Урал': 'Уральский федеральный округ',
+  'Уральский': 'Уральский федеральный округ',
+  'Башкирский Урал': 'Республика Башкортостан',
+  'Учалинский район': 'Учалинский район, Республика Башкортостан',
+  'Еткульский район': 'Еткульский район, Челябинская область',
+};
+
+async function fetchBoundary(name) {
+  const query = REGION_ALIASES[name] || name;
+  if (query in boundaryCache) return boundaryCache[query];
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?` +
+      `q=${encodeURIComponent(query + ', Россия')}` +
+      `&format=geojson&polygon_geojson=1&limit=1` +
+      `&accept-language=ru`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'SpidersUral/1.0' }
+    });
+    const data = await res.json();
+    const feature = data.features?.[0] || null;
+    boundaryCache[query] = feature;
+    return feature;
+  } catch (e) {
+    boundaryCache[query] = null;
+    return null;
+  }
+}
+
+// Ключевые слова административных единиц
+const ADMIN_KEYWORDS = ['область', 'край', 'республика', 'округ', 'район', 'автономный'];
+
+// Извлекаем уникальные регионы из отфильтрованных записей
+function extractRegions(filtered) {
+  const regions = new Set();
+  filtered.forEach(s => {
+    // Берём поле region напрямую
+    if (s.region) regions.add(s.region.trim());
+
+    // Из location — только части, похожие на административные единицы
+    if (s.location) {
+      s.location.split(',').map(p => p.trim()).forEach(p => {
+        const pl = p.toLowerCase();
+        if (ADMIN_KEYWORDS.some(kw => pl.includes(kw)) || p in REGION_ALIASES) {
+          regions.add(p);
+        }
+      });
+    }
+  });
+  return regions;
+}
+
+async function highlightRegions() {
+  // Убираем старый слой
+  if (regionsLayer) {
+    map.removeLayer(regionsLayer);
+    regionsLayer = null;
+  }
+  if (!searchQuery.trim()) return;
+
+  const filtered = getFiltered();
+  if (filtered.length === 0) return;
+
+  const regions = extractRegions(filtered);
+  const features = [];
+
+  for (const region of regions) {
+    const feature = await fetchBoundary(region);
+    if (feature) features.push(feature);
+  }
+
+  if (features.length === 0) return;
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  regionsLayer = L.geoJSON(
+    { type: 'FeatureCollection', features },
+    {
+      style: {
+        color: '#f59e0b',
+        weight: 2,
+        opacity: 0.9,
+        fillColor: '#f59e0b',
+        fillOpacity: isDark ? 0.13 : 0.10,
+        dashArray: '6 4'
+      }
+    }
+  ).addTo(map);
+}
 
 // ── LOAD DATA ───────────────────────────────────────────
 async function loadData() {
@@ -216,6 +314,17 @@ function setField(id, val) {
 function closeModal() {
   modalOverlay.classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ── HIGHLIGHT ───────────────────────────────────────────
+function hl(text, query) {
+  if (!text) return '';
+  if (!query || !query.trim()) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(
+    new RegExp(`(${escaped})`, 'gi'),
+    '<mark class="search-hl">$1</mark>'
+  );
 }
 
 // ── MAP ─────────────────────────────────────────────────
@@ -359,12 +468,12 @@ function updateMapMarkers() {
   
   // Определяем тему один раз для всей функции
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const markerFill = isDark ? '#2a2a2a' : '#ffffff';
+  const markerFill   = isDark ? '#2a2a2a' : '#ffffff';
   const markerStroke = '#7f7f8a';
-  const popupBg = isDark ? '#2a2a2a' : '#ffffff';
-  const textPrimary = isDark ? '#f3f4f6' : '#1a1a1a';
+  const popupBg      = isDark ? '#2a2a2a' : '#ffffff';
+  const textPrimary  = isDark ? '#f3f4f6' : '#1a1a1a';
   const textSecondary = isDark ? '#a1a1aa' : '#5c5c64';
-  const textMuted = isDark ? '#71717a' : '#7f7f8a';
+  const textMuted    = isDark ? '#71717a' : '#7f7f8a';
   
   // Создаем новую группу кластеров
   markerClusterGroup = L.markerClusterGroup({
@@ -432,19 +541,20 @@ function updateMapMarkers() {
       closeOnClick: false
     };
 
+    const q = searchQuery;
     marker.bindPopup(`
       <div style="font-family:'Inter',sans-serif;min-width:240px;background:${popupBg};color:${textPrimary};padding:16px;border-radius:12px;">
         <div style="font-size:16px;font-weight:600;color:${textPrimary};margin-bottom:4px;">
-          ${s.name}
+          ${hl(s.name, q)}
         </div>
         <div style="font-size:13px;color:${textSecondary};margin-bottom:16px;font-style:italic;">
-          ${s.name_ru || ''}
+          ${hl(s.name_ru, q)}
         </div>
         <div style="font-size:13px;color:${textPrimary};line-height:1.6;">
           <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Координаты:</span> ${s.latitude.toFixed(4)}, ${s.longitude.toFixed(4)}</div>
-          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Место:</span> ${s.location || 'не указано'}</div>
-          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Регион:</span> ${s.region || 'не указан'}</div>
-          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Год:</span> ${s.date || '—'}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Место:</span> ${hl(s.location, q) || 'не указано'}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Регион:</span> ${hl(s.region, q) || 'не указан'}</div>
+          <div style="margin-bottom:6px;"><span style="color:${textMuted};font-weight:500;">Год:</span> ${hl(s.date, q) || '—'}</div>
         </div>
         <a href="${sourceUrl}" target="_blank" rel="noopener noreferrer"
            style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;padding:10px 16px;background:#7f7f8a;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;text-align:center;text-decoration:none;font-weight:500;transition:all 0.2s ease;">
@@ -489,6 +599,7 @@ function updateMapMarkers() {
       padding: [30, 30]
     });
   }
+
 }
 
 window.openSpiderModal = function(id) {
@@ -504,7 +615,11 @@ window.openSpiderModal = function(id) {
 // ── EVENTS ──────────────────────────────────────────────
 searchInput.addEventListener('input', e => {
   searchQuery = e.target.value;
-  updateMapMarkers();
+  updateMapMarkers(); // маркеры — сразу
+
+  // Подсветка регионов — с задержкой, чтобы не спамить Nominatim
+  clearTimeout(highlightDebounce);
+  highlightDebounce = setTimeout(() => highlightRegions(), 600);
 });
 
 document.getElementById('modal-close').addEventListener('click', closeModal);

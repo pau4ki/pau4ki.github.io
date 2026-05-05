@@ -507,6 +507,14 @@ header {
   background-color: transparent !important;
 }
 
+/* ── SEARCH HIGHLIGHT ── */
+.search-hl {
+  background: rgba(245, 158, 11, 0.25);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { 
   width: 8px; 
