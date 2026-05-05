@@ -527,11 +527,14 @@ footer {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
+  /* Шапка: 2 строки
+     Строка 1: заголовок | кнопка темы
+     Строка 2: поиск + регион (на всю ширину)           */
   .header-inner {
     height: auto;
     flex-wrap: wrap;
     padding: 8px 16px;
-    gap: 8px;
+    gap: 6px;
   }
 
   .header-left {
@@ -539,15 +542,17 @@ footer {
     min-width: 0;
   }
 
+  .header-right {
+    margin-left: 0;
+    flex-shrink: 0;
+  }
+
+  /* Строка поиска — всегда вторая, на всю ширину */
   .header-center {
     order: 3;
     width: 100%;
     max-width: 100%;
     margin: 0;
-  }
-
-  .header-right {
-    margin-left: 0;
   }
 
   .modal {
@@ -565,17 +570,35 @@ footer {
   .header-sub {
     display: none;
   }
+
+  /* На совсем маленьких экранах дропдаун под поиском */
+  .header-center {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .region-select {
+    width: 100%;
+  }
 }
 
-@media (max-height: 600px) and (orientation: landscape) {
+/* Ландшафт на телефоне — шапка в одну строку, компактно */
+@media (max-height: 500px) and (orientation: landscape) {
   .header-inner {
     height: 40px;
     flex-wrap: nowrap;
+    padding: 0 16px;
   }
 
   .header-center {
     order: 0;
     width: auto;
     flex: 1;
+    max-width: none;
+    margin: 0;
+  }
+
+  .header-sub {
+    display: none;
   }
 }
